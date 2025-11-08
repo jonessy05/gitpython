@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: biletado
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - secret.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: biletado
+      app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: reservations-backend
+    newName: reservations-backend
+    newTag: latest
+
+configMapGenerator:
+  - name: reservations-config
+    literals:
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - LOG_LEVEL=info
+      - JWT_ALGORITHM=RS256
+      - JWT_AUDIENCE=reservations-api
+      - JWT_ISSUER_URL=https://keycloak.example.com/auth/realms/biletado
+
+secretGenerator:
+  - name: reservations-secrets
+    literals:
+      - SECRET_KEY=change-this-secret-key-in-production-use-strong-random-value

@@ -1,0 +1,34 @@
+[2025-11-05T22:19:50.686693] [INFO] [operation:INIT] [user:system] [object:logger] [id:reservations_api] - Logger initialized
+[2025-11-05T22:19:50.692691] [INFO] [operation:STARTUP] [user:system] [object:api] [id:reservations-api] - Starting Reservierungen API
+[2025-11-05T22:19:50.692691] [INFO] [operation:CONFIG] [user:system] [object:config] [id:api-config] - Configuration: JWT_ISSUER_URL=Not configured, LOG_LEVEL=INFO
+[2025-11-05T22:20:00.374754] [INFO] [operation:INIT] [user:system] [object:logger] [id:reservations_api] - Logger initialized
+[2025-11-05T22:20:00.379761] [INFO] [operation:STARTUP] [user:system] [object:api] [id:reservations-api] - Starting Reservierungen API
+[2025-11-05T22:20:00.379761] [INFO] [operation:CONFIG] [user:system] [object:config] [id:api-config] - Configuration: JWT_ISSUER_URL=Not configured, LOG_LEVEL=INFO
+[2025-11-05T22:20:07.734814] [INFO] [operation:INIT] [user:system] [object:logger] [id:reservations_api] - Logger initialized
+[2025-11-05T22:20:07.739321] [INFO] [operation:STARTUP] [user:system] [object:api] [id:reservations-api] - Starting Reservierungen API
+[2025-11-05T22:20:07.739321] [INFO] [operation:CONFIG] [user:system] [object:config] [id:api-config] - Configuration: JWT_ISSUER_URL=Not configured, LOG_LEVEL=INFO
+[2025-11-05T22:20:07.881002] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:2] - Created reservation for Test User
+[2025-11-05T22:20:07.885513] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:3] - Created reservation for Test
+[2025-11-05T22:20:07.897839] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:4] - Created reservation for Test User
+[2025-11-05T22:20:07.899838] [INFO] [operation:UPDATE] [user:test_user@example.com] [object:reservation] [id:4] - Updated reservation 4
+[2025-11-05T22:20:07.910854] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:5] - Created reservation for Test User
+[2025-11-05T22:20:07.911855] [INFO] [operation:DELETE] [user:test_user@example.com] [object:reservation] [id:5] - Deleted reservation 5
+[2025-11-05T22:20:07.925768] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:6] - Created reservation for Test User
+[2025-11-05T22:20:07.927772] [INFO] [operation:UPDATE] [user:test_user@example.com] [object:reservation] [id:6] - Updated reservation status to ReservationStatus.CONFIRMED
+[2025-11-05T22:20:16.743749] [INFO] [operation:INIT] [user:system] [object:logger] [id:reservations_api] - Logger initialized
+[2025-11-05T22:20:16.747881] [INFO] [operation:STARTUP] [user:system] [object:api] [id:reservations-api] - Starting Reservierungen API
+[2025-11-05T22:20:16.748881] [INFO] [operation:CONFIG] [user:system] [object:config] [id:api-config] - Configuration: JWT_ISSUER_URL=Not configured, LOG_LEVEL=INFO
+[2025-11-05T22:20:37.530579] [INFO] [operation:INIT] [user:system] [object:logger] [id:reservations_api] - Logger initialized
+[2025-11-05T22:20:37.534580] [INFO] [operation:STARTUP] [user:system] [object:api] [id:reservations-api] - Starting Reservierungen API
+[2025-11-05T22:20:37.534580] [INFO] [operation:CONFIG] [user:system] [object:config] [id:api-config] - Configuration: JWT_ISSUER_URL=Not configured, LOG_LEVEL=INFO
+[2025-11-05T22:20:52.188636] [INFO] [operation:INIT] [user:system] [object:logger] [id:reservations_api] - Logger initialized
+[2025-11-05T22:20:52.199148] [INFO] [operation:STARTUP] [user:system] [object:api] [id:reservations-api] - Starting Reservierungen API
+[2025-11-05T22:20:52.199148] [INFO] [operation:CONFIG] [user:system] [object:config] [id:api-config] - Configuration: JWT_ISSUER_URL=Not configured, LOG_LEVEL=INFO
+[2025-11-05T22:20:52.371251] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:2] - Created reservation for Test User
+[2025-11-05T22:20:52.375760] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:3] - Created reservation for Test
+[2025-11-05T22:20:52.391111] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:4] - Created reservation for Test User
+[2025-11-05T22:20:52.393111] [INFO] [operation:UPDATE] [user:test_user@example.com] [object:reservation] [id:4] - Updated reservation 4
+[2025-11-05T22:20:52.406130] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:5] - Created reservation for Test User
+[2025-11-05T22:20:52.409131] [INFO] [operation:DELETE] [user:test_user@example.com] [object:reservation] [id:5] - Deleted reservation 5
+[2025-11-05T22:20:52.425673] [INFO] [operation:CREATE] [user:test_user@example.com] [object:reservation] [id:6] - Created reservation for Test User
+[2025-11-05T22:20:52.428673] [INFO] [operation:UPDATE] [user:test_user@example.com] [object:reservation] [id:6] - Updated reservation status to ReservationStatus.CONFIRMED

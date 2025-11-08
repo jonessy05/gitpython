@@ -1,0 +1,313 @@
+  openapi: 3.1.0
+info:
+  title: Reservierungen API
+  version: 1.0.0
+  description: API für die Verwaltung von Reservierungen mit JWT-Authentifizierung
+  contact:
+    name: API Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Lokaler Entwicklungsserver
+  - url: http://reservations-api:8000
+    description: Docker/Kubernetes Server
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      tags:
+        - system
+      responses:
+        '200':
+          description: Service ist bereit
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /auth/token:
+    post:
+      summary: JWT Token generieren
+      tags:
+        - authentication
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token erfolgreich generiert
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                    example: bearer
+                  expires_in:
+                    type: integer
+                    description: Ablaufzeit in Sekunden
+
+  /reservations:
+    get:
+      summary: Alle Reservierungen abrufen
+      tags:
+        - reservations
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Liste aller Reservierungen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+        '401':
+          description: Authentifizierung erforderlich
+
+    post:
+      summary: Neue Reservierung erstellen
+      tags:
+        - reservations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationCreate'
+      responses:
+        '201':
+          description: Reservierung erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '401':
+          description: Authentifizierung erforderlich
+        '422':
+          description: Validierungsfehler
+
+  /reservations/{reservation_id}:
+    get:
+      summary: Einzelne Reservierung abrufen
+      tags:
+        - reservations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: reservation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Reservierung gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '401':
+          description: Authentifizierung erforderlich
+        '404':
+          description: Reservierung nicht gefunden
+
+    put:
+      summary: Reservierung aktualisieren
+      tags:
+        - reservations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: reservation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationCreate'
+      responses:
+        '200':
+          description: Reservierung erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '401':
+          description: Authentifizierung erforderlich
+        '404':
+          description: Reservierung nicht gefunden
+
+    delete:
+      summary: Reservierung löschen
+      tags:
+        - reservations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: reservation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Reservierung erfolgreich gelöscht
+        '401':
+          description: Authentifizierung erforderlich
+        '404':
+          description: Reservierung nicht gefunden
+
+  /reservations/{reservation_id}/status:
+    patch:
+      summary: Status einer Reservierung aktualisieren
+      tags:
+        - reservations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: reservation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationStatus'
+      responses:
+        '200':
+          description: Status erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '401':
+          description: Authentifizierung erforderlich
+        '404':
+          description: Reservierung nicht gefunden
+
+components:
+  schemas:
+    ReservationStatus:
+      type: string
+      enum:
+        - pending
+        - confirmed
+        - cancelled
+        - completed
+      description: Status einer Reservierung
+
+    ReservationCreate:
+      type: object
+      required:
+        - customer_name
+        - customer_email
+        - reservation_date
+        - party_size
+      properties:
+        customer_name:
+          type: string
+          minLength: 1
+          description: Name des Kunden
+        customer_email:
+          type: string
+          format: email
+          description: E-Mail des Kunden
+        reservation_date:
+          type: string
+          format: date-time
+          description: Reservierungsdatum und -uhrzeit
+        party_size:
+          type: integer
+          minimum: 1
+          description: Anzahl der Personen
+        special_requests:
+          type: string
+          nullable: true
+          description: Spezielle Wünsche oder Bemerkungen
+
+    Reservation:
+      type: object
+      required:
+        - id
+        - customer_name
+        - customer_email
+        - reservation_date
+        - party_size
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          description: Eindeutige Reservierungs-ID
+        customer_name:
+          type: string
+          description: Name des Kunden
+        customer_email:
+          type: string
+          format: email
+          description: E-Mail des Kunden
+        reservation_date:
+          type: string
+          format: date-time
+          description: Reservierungsdatum und -uhrzeit
+        party_size:
+          type: integer
+          minimum: 1
+          description: Anzahl der Personen
+        special_requests:
+          type: string
+          nullable: true
+          description: Spezielle Wünsche oder Bemerkungen
+        status:
+          $ref: '#/components/schemas/ReservationStatus'
+        created_at:
+          type: string
+          format: date-time
+          description: Erstellungsdatum
+        updated_at:
+          type: string
+          format: date-time
+          description: Zuletzt aktualisiert
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer Token für Authentifizierung
+
+tags:
+  - name: system
+    description: Systemendpoints
+  - name: authentication
+    description: Authentifizierung und Token-Management
+  - name: reservations
+    description: Reservierungsverwaltung (authentifiziert)
