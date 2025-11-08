@@ -90,21 +90,15 @@ jobs:
               body: '🚀 Deployed to production successfully!'
             })
       
-      - name: Notify Slack on failure
-        if: failure()
+      - name: Slack Notification on failure (optional)
+        if: failure() && secrets.SLACK_WEBHOOK != ''
         uses: slackapi/slack-github-action@v1.24.0
         with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
-          payload: |
-            {
-              "text": "❌ Deployment failed!",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Deployment Failed*\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}"
-                  }
-                }
-              ]
-            }
+          slack-message: |
+            ❌ Deployment failed!
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+

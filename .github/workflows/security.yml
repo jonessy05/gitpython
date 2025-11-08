@@ -54,13 +54,14 @@ jobs:
       
       - name: Upload security reports
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: security-reports
           path: |
             bandit-report.json
             safety-report.json
             dependency-check-report.json
+          retention-days: 30
       
       - name: Comment PR with security results
         if: github.event_name == 'pull_request'
