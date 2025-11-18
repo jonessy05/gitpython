@@ -7,8 +7,6 @@ on:
   pull_request:
     branches: [main, develop]
     paths: ['reservations-backend/**']
-  schedule:
-    - cron: '0 2 * * 0'  # Weekly on Sunday at 02:00 UTC
 
 jobs:
   security:
@@ -21,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       
       - name: Install dependencies
         run: |

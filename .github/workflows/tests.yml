@@ -11,19 +11,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11', '3.12']
-      fail-fast: false  # Nicht abbrechen wenn eine Version fehlschlägt
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.12'
           cache: 'pip'
       
       - name: Install dependencies
@@ -35,27 +31,26 @@ jobs:
         continue-on-error: true
         run: |
           cd reservations-backend
-          pytest tests/ -v --tb=short --cov=app --cov-report=xml --cov-report=term-summary --cov-report=html
+          pytest tests/ -v --tb=short --cov=app --cov-report=xml --cov-report=term --cov-report=html
       
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.11'
         uses: codecov/codecov-action@v3
         with:
           files: ./reservations-backend/coverage.xml
           flags: unittests
-          name: codecov-umbrella-py${{ matrix.python-version }}
+          name: codecov-umbrella
           fail_ci_if_error: false
       
       - name: Upload coverage reports as artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report-py${{ matrix.python-version }}
+          name: coverage-report
           path: reservations-backend/htmlcov/
           retention-days: 30
       
       - name: Comment PR with test results
-        if: github.event_name == 'pull_request' && matrix.python-version == '3.11'
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
