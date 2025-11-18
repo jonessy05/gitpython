@@ -1,17 +1,28 @@
 # Reservierungen Backend API
 
-FastAPI-basierte REST API für die Verwaltung von Reservierungen mit JWT-Authentifizierung.
+FastAPI-basierte REST API für die Verwaltung von Reservierungen mit JWT-Authentifizierung, vollständiger CI/CD-Pipeline, containerisiertem Deployment und umfassender Logging-Unterstützung.
+
+**Projektübersicht:**
+- 🎯 **Zweck:** REST API für Reservierungsverwaltung
+- 🛠️ **Stack:** Python 3.12 + FastAPI + Pydantic
+- 📦 **Deployment:** Docker Container + Kubernetes
+- 🔒 **Sicherheit:** JWT-Authentication + HTTPS-ready
+- 📊 **Quality:** GitHub Actions CI/CD mit vollständiger Pipeline
+- 📝 **Logging:** Strukturiert auf allen Ebenen (lokal, Container, K8s)
 
 ## 🎯 Features
 
-- ✅ **REST API** mit FastAPI
-- ✅ **JWT-Authentifizierung** für sichere Endpoints
-- ✅ **OpenAPI 3.1 Dokumentation** (automatisch generiert)
+- ✅ **REST API** mit FastAPI v0.121.1
+- ✅ **JWT-Authentifizierung** mit python-jose für sichere Endpoints
+- ✅ **OpenAPI 3.1 Dokumentation** (automatisch generiert via Swagger/ReDoc)
 - ✅ **CRUD-Operationen** für Reservierungen
-- ✅ **Docker Support** mit Multi-Stage Build
+- ✅ **Containerisierung** mit Docker Multi-Stage Build
 - ✅ **Kubernetes Deployment** mit Kustomize
-- ✅ **Health Check Endpoint**
-- ✅ **Pydantic Validierung**
+- ✅ **Health Check Endpoint** für Container-Orchestrierung
+- ✅ **Pydantic v2.5.0 Validierung** für Datenintegrität
+- ✅ **Strukturiertes Logging** mit Timestamps und Log-Levels
+- ✅ **GitHub Actions CI/CD Pipeline** mit Lint, Test, Security, Build
+- ✅ **Automatisierte Tests** mit pytest und Code-Coverage
 
 ## 📋 API Endpoints
 
@@ -33,11 +44,54 @@ FastAPI-basierte REST API für die Verwaltung von Reservierungen mit JWT-Authent
 - `GET /redoc` - ReDoc Dokumentation
 - `GET /openapi.json` - OpenAPI Schema
 
+## ✅ Erfüllung der Anforderungen
+
+| Kriterium | Umsetzung | Details |
+|-----------|-----------|---------|
+| **Programmiersprache** | Python 3.12 | Exklusiv, einzige getestete Version |
+| **Framework** | FastAPI v0.121.1 | Modern, performant, integrierte OpenAPI-Docs |
+| **ORM/Datenvalidierung** | Pydantic v2.5.0 | Typsichere Datenvalidierung, Prepared Statements (In-Memory) |
+| **Authentifizierung** | JWT mit python-jose | Token-basiert, 30min Gültigkeit |
+| **API-Dokumentation** | OpenAPI 3.1 (auto) | Swagger UI + ReDoc |
+| **Containerisierung** | Docker Multi-Stage | Python 3.12-slim, optimiert |
+| **Orchestrierung** | Kubernetes + Kustomize | Production-ready Deployment-Konfiguration |
+| **CI/CD Pipeline** | GitHub Actions | Lint, Test, Security, Build Jobs |
+| **Logging** | Strukturiert (Timestamps) | DEBUG/INFO/WARNING/ERROR Levels |
+| **Tests** | pytest + Coverage | Unit Tests mit Code-Coverage Reports |
+| **Codequalität** | pylint, black, flake8 | Automatisiert in Pipeline |
+
+---
+
+## 🚀 Quick Start (5 Minuten)
+
+```bash
+# 1. In das Verzeichnis wechseln
+cd reservations-backend
+
+# 2. Virtuelle Umgebung erstellen & aktivieren
+python -m venv venv
+venv\Scripts\activate  # Windows
+
+# 3. Dependencies installieren
+pip install -r requirements.txt
+
+# 4. Server starten
+uvicorn app.main:app --reload --port 8000
+
+# 5. API öffnen
+# Browser: http://localhost:8000/docs (Swagger UI mit Test-Interface)
+```
+
+**Das war's!** Die API läuft lokal mit Logs in der Console.
+
+---
+
 ## 🚀 Lokale Entwicklung
 
 ### Voraussetzungen
-- Python 3.11+
+- Python 3.12+ (einzig unterstützte Version)
 - pip
+- Optional: Docker/Podman für Container-Testing
 
 ### Installation
 
@@ -61,9 +115,9 @@ Die API ist dann verfügbar unter:
 - Docs: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-## 🐳 Docker
+## 🐳 Container-Deployment
 
-### Image bauen
+### Image bauen (Podman/Docker)
 
 ```bash
 cd reservations-backend
@@ -71,12 +125,33 @@ podman build -t reservations-backend:latest .
 # oder: docker build -t reservations-backend:latest .
 ```
 
-### Container starten
+**Multi-Stage Build Details:**
+- Stage 1: Builder - installiert Dependencies
+- Stage 2: Runtime - Production-Image mit uvicorn ASGI Server
+- Basis-Image: `python:3.12-slim` (optimiert für Größe)
+
+### Container starten mit Logging
 
 ```bash
-podman run -p 8000:80 reservations-backend:latest
-# oder: docker run -p 8000:80 reservations-backend:latest
+# Mit Logs in Container (werden zu stdout gestreamt)
+podman run -p 8000:80 \
+  -e LOG_LEVEL=INFO \
+  -e SECRET_KEY="your-secret-key" \
+  reservations-backend:latest
+
+# Log-Output folgen
+podman logs -f <container-id>
 ```
+
+### Wichtige Container-Environment-Variablen
+
+| Variable | Standard | Beschreibung |
+|----------|----------|-------------|
+| `LOG_LEVEL` | `INFO` | DEBUG, INFO, WARNING, ERROR |
+| `SECRET_KEY` | Pflichtfeld | JWT Secret (mind. 32 Zeichen in Produktion) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Token-Gültigkeit |
+| `HOST` | `0.0.0.0` | Bind Address |
+| `PORT` | `80` | Container Port |
 
 ## ☸️ Kubernetes Deployment
 
@@ -132,99 +207,115 @@ kubectl rollout restart deployment reservations-backend -n biletado
 kubectl rollout status deployment reservations-backend -n biletado
 ```
 
-## 🔄 CI/CD mit GitHub Actions
+## 🔄 GitHub Actions CI/CD Pipeline
 
-### Verfügbare Workflows
+Das Projekt nutzt GitHub Actions für vollständige Qualitätssicherung und Deployment-Automation.
 
-Das Projekt nutzt GitHub Actions für automatisierte Qualitätssicherung und Deployment:
+### Pipeline-Übersicht
 
-#### 1. **Lint Workflow** (`.github/workflows/lint.yml`)
-- Läuft bei: Push/PR auf `main` oder `develop`
-- Prüft: pylint, black, flake8
-- Artifacts: Lint Reports
-
-```yaml
-# Automatisch bei Push/PR
-git push origin feature/my-feature
-# → Lint Workflow wird automatisch gestartet
-```
-
-#### 2. **Test Workflow** (`.github/workflows/tests.yml`)
-- Läuft bei: Push/PR auf `main` oder `develop`
-- Matrix-Build: Python 3.11 + 3.12
-- Coverage: Codecov Integration
-- Artifacts: Coverage Reports
-
-```yaml
-# Automatisch bei Push/PR
-git push origin feature/my-feature
-# → Tests für Python 3.11 und 3.12
-# → Coverage Report uploaded zu Codecov
-```
-
-#### 3. **Security Workflow** (`.github/workflows/security.yml`)
-- Läuft bei: Push/PR + wöchentliche Schedule
-- Scans: Bandit, Safety, Dependency-Check
-- Artifacts: Security Reports
-
-#### 4. **Build Workflow** (`.github/workflows/build.yml`)
-- Läuft bei: Push/PR/Tag auf `main`, `develop`
-- Baut: Docker Image für ghcr.io
-- Caching: Layer Caching für schnellere Builds
-- Tags: `latest`, `<branch>`, `<version>`, `sha-<hash>`
-
-#### 5. **Complete CI/CD Pipeline** (`.github/workflows/ci-cd.yml`)
-- Kombiniert: Lint → Test → Security → Build
-- Status Check: Zeigt Overall-Status an
-- Dependencies: Jobs warten aufeinander
-
-#### 6. **Deploy Workflow** (`.github/workflows/deploy.yml`)
-- Läuft bei: Push auf `main`, Tags `v*`
-- Deployment: Zu Kubernetes mit Kustomize
-- Smoke Tests: Health Check nach Deployment
-- Notifications: Slack Alerts bei Fehlern
-
-### Secrets konfigurieren
-
-Für Deployments und Registry-Zugriff müssen folgende Secrets gespeichert werden:
+Die Pipeline besteht aus 4 parallel-laufenden Jobs, die nur bei Änderungen an relevanten Dateien triggern:
 
 ```
-GitHub Settings → Secrets and variables → Actions:
-
-KUBE_CONFIG          # Base64-encoded kubeconfig für K8s
-SLACK_WEBHOOK        # Optional: Slack Notifications
-DOCKER_USERNAME      # Optional: Docker Hub Username
-DOCKER_PASSWORD      # Optional: Docker Hub Token
+┌─────────────────────────────────────────────────────────┐
+│  GitHub Push oder Pull Request                          │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+         ┌─────────────┼─────────────┬──────────────┐
+         │             │             │              │
+    ┌────▼────┐  ┌────▼────┐  ┌────▼────┐  ┌────▼────┐
+    │  Lint   │  │  Tests  │  │Security │  │  Build  │
+    └─────────┘  └─────────┘  └─────────┘  └─────────┘
 ```
 
-**KUBE_CONFIG vorbereiten:**
+### 1️⃣ **Lint Workflow** (`.github/workflows/lint.yml`)
+
+**Trigger:** Push/PR mit Änderungen in `app/**` oder `requirements.txt`
+
+**Python 3.12 Qualitätschecks:**
+- ✅ **pylint**: Code-Analyse (max-line-length: 120)
+- ✅ **black**: Code-Formatierung (automatisch)
+- ✅ **flake8**: PEP8 Compliance
+
+**Ausgabe:** Automatischer PR-Comment mit Ergebnissen
+
+### 2️⃣ **Test Workflow** (`.github/workflows/tests.yml`)
+
+**Trigger:** Push/PR mit Änderungen in `app/**`, `tests/**`, oder `requirements.txt`
+
+**Auf Python 3.12 Standardmäßig:**
+- ✅ **pytest**: Unit Tests mit Verbose Output
+- ✅ **pytest-cov**: Code Coverage Analyse
+- ✅ **Codecov Integration**: Coverage Reports als Artifacts
+
+**Coverage-Reports:**
+- Terminal-Output: `--cov-report=term`
+- XML-Report: `--cov-report=xml` (für Codecov)
+- HTML-Report: `--cov-report=html` (uploadbar als Artifact)
+
+**Test-Artefakte:**
+- Coverage Reports in `reservations-backend/htmlcov/`
+- 30 Tage Retention
+
+### 3️⃣ **Security Workflow** (`.github/workflows/security.yml`)
+
+**Trigger:** Push/PR mit Änderungen in `reservations-backend/**`
+
+**Security Scans auf Python 3.12:**
+- ✅ **bandit**: Findet häufige Sicherheitsprobleme
+- ✅ **safety**: Dependency Vulnerability Check
+- ✅ **OWASP Dependency-Check**: Container-spezifische Schwachstellen
+
+**Sicherheits-Artefakte:**
+- `bandit-report.json`
+- `safety-report.json`
+- `dependency-check-report.json`
+
+### 4️⃣ **Build Workflow** (`.github/workflows/build.yml`)
+
+**Trigger:** Push/PR/Tag mit Änderungen in `reservations-backend/**` oder `.github/workflows/build.yml`
+
+**Docker Image Build:**
+- Python 3.12 Multi-Stage Build
+- Layer Caching für schnellere Builds
+- Push zu ghcr.io (GitHub Container Registry)
+
+**Image-Tags:**
+- `latest` für main-Branch
+- `<branch-name>` für feature-Branches
+- `v*` semantische Versioning für Tags
+- `<commit-sha>` für Traceability
+
+**Automatisierter PR-Comment:**
+- ✅ "Docker image built successfully for this PR!"
+
+---
+
+### Manuelle Workflow-Ausführung
+
+**In GitHub UI:**
+```
+Repository → Actions → [Workflow Name] → Run workflow
+```
+
+**Mit GitHub CLI:**
 ```bash
-# Base64 encode deinen kubeconfig
-cat ~/.kube/config | base64 -w 0
-
-# Dann in GitHub Secrets einfügen
+gh workflow run lint.yml --ref main
+gh workflow run tests.yml --ref develop
 ```
 
-### Workflow Status prüfen
+### Status und Logs prüfen
 
+**GitHub UI:**
 ```
-GitHub UI:
-  Repository → Actions → [Workflow Name]
-  
-  oder mit GitHub CLI:
-  gh run list
-  gh run view <RUN_ID>
-  gh run view <RUN_ID> --log
+Repository → Actions → [Run] → Jobs → [Job Name]
 ```
 
-### Automatische PR-Comments
-
-Die Workflows kommentieren automatisch PRs mit Status-Updates:
-- ✅ Lint completed
-- ✅ Tests passed with coverage
-- 🔒 Security scan completed
-- 🐳 Docker image built
-- 🚀 Deployed successfully
+**GitHub CLI:**
+```bash
+gh run list
+gh run view <RUN_ID>
+gh run view <RUN_ID> --log
+```
 
 ---
 
@@ -248,67 +339,122 @@ pytest tests/test_models.py -v
 pytest tests/ -v --tb=long
 ```
 
-### Automatisierte Tests im CI/CD
+### Automatisierte Tests in der CI/CD Pipeline
 
-Die GitLab CI/CD Pipeline führt automatisch folgende Tests aus:
+Die GitHub Actions Pipeline führt automatisch folgende Tests aus:
 
-```yaml
-stages:
-  - lint        # pylint, black
-  - test        # pytest Unit Tests
-  - build       # Docker Image Build
-  - scan        # Container & Dependency Scanning
+**Test Workflow Ablauf:**
+```
+1. pytest wird mit Coverage aktiviert
+2. Tests laufen gegen Python 3.12
+3. Coverage Reports werden generiert (HTML + XML)
+4. Codecov Integration lädt XML-Reports hoch
+5. HTML-Reports als Artifacts (30 Tage)
 ```
 
-Siehe `.gitlab-ci.yml` für Details.
+**Pytest Konfiguration (pytest.ini):**
 
-## 📝 Logging
+## 📝 Strukturiertes Logging
 
-### Logs anzeigen
+Das System bietet umfassendes Logging auf mehreren Ebenen für Debugging und Monitoring.
 
-#### Lokal entwickelt:
-```bash
-# Container Log ansehen
-docker logs <container-id> -f
-
-# Oder Log-Datei im Container:
-docker exec <container-id> tail -f /app/logs/reservations_api.log
-```
-
-#### In Kubernetes:
-```bash
-# Pod Logs anzeigen
-kubectl logs -f deployment/reservations-backend -n biletado
-
-# Mit Timestamp
-kubectl logs deployment/reservations-backend -n biletado --timestamps
-```
-
-### Audit-Logs
-
-Alle schreibenden Operationen (CREATE, UPDATE, DELETE) werden als Audit-Logs erfasst:
+### Log-Format
 
 ```
-[2025-11-05T10:30:45.123456] [INFO] [operation:CREATE] [user:john@example.com] [object:reservation] [id:42] - Created reservation for Max Mustermann
+[2025-11-18T10:30:45.123456Z] [INFO] [reservations.py:42] - GET /reservations - User: user@example.com - Status: 200
+[2025-11-18T10:30:46.234567Z] [INFO] [reservations.py:67] - POST /reservations - Created: ID=123 - Status: 201
+[2025-11-18T10:30:47.345678Z] [WARNING] [auth.py:15] - Token validation failed - Invalid signature
+[2025-11-18T10:30:48.456789Z] [ERROR] [main.py:88] - Database connection error - Connection refused
 ```
 
-Format: `[TIMESTAMP] [LEVEL] [operation:OP] [user:USERID] [object:TYPE] [id:ID] - MESSAGE`
+**Format:** `[ISO-TIMESTAMP] [LEVEL] [MODULE:LINE] - MESSAGE`
 
-### Logging Level konfigurieren
+### Log-Level Konfiguration
 
 ```bash
-# Environment Variable setzen
+# Lokal
 export LOG_LEVEL=DEBUG  # DEBUG, INFO, WARNING, ERROR
 
 # In Docker
-docker run -e LOG_LEVEL=DEBUG reservations-backend:latest
+podman run -e LOG_LEVEL=DEBUG reservations-backend:latest
 
-# In Kubernetes kustomization.yaml
+# In Kubernetes (kustomization.yaml)
 configMapGenerator:
   - name: reservations-config
     literals:
       - LOG_LEVEL=DEBUG
+
+# In der Anwendung
+import logging
+logger = logging.getLogger(__name__)
+logger.info("Reservierung erstellt")
+logger.error("Fehler beim Abrufen der Reservierung")
 ```
+
+### Logs abrufen
+
+#### Lokal (uvicorn Server):
+```bash
+cd reservations-backend
+uvicorn app.main:app --reload --log-level info
+# Logs erscheinen direkt in der Console
+```
+
+#### Docker Container:
+```bash
+# Live Logs folgen
+docker logs -f <container-id>
+
+# Letzte 50 Zeilen
+docker logs --tail 50 <container-id>
+
+# Mit Timestamps
+docker logs --timestamps <container-id>
+```
+
+#### Kubernetes Pod:
+```bash
+# Logs anzeigen
+kubectl logs -f deployment/reservations-backend -n biletado
+
+# Vorherige Logs (falls Pod neu gestartet wurde)
+kubectl logs -p deployment/reservations-backend -n biletado
+
+# Mit Timestamp
+kubectl logs deployment/reservations-backend -n biletado --timestamps=true
+```
+
+### Audit-Logging für schreibende Operationen
+
+Alle CREATE, UPDATE, DELETE Operationen werden gelogged:
+
+```
+[2025-11-18T10:30:45.123456Z] [INFO] [audit] - Operation: CREATE
+  - Entity: Reservation
+  - ID: 42
+  - User: john@example.com
+  - Data: {customer_name: "Max Mustermann", party_size: 4}
+  - Status: 201
+
+[2025-11-18T10:30:50.234567Z] [INFO] [audit] - Operation: UPDATE
+  - Entity: Reservation
+  - ID: 42
+  - User: john@example.com
+  - Changes: {status: "pending" → "confirmed"}
+  - Status: 200
+```
+
+### Container-integrierte Logs
+
+Das Container-System kann Logs automatisch:
+- ✅ Zu stdout/stderr streamen (Docker/Podman logs lesen)
+- ✅ Mit Timestamps versehen
+- ✅ Nach Log-Level filtern
+- ✅ In ELK Stack, Splunk, Datadog integrieren
+
+---
+
+## 🧪 API Testing & Authentifizierung
 
 ### 1. Token generieren
 
@@ -348,7 +494,7 @@ curl -X POST "http://localhost:8000/reservations" \
   }'
 ```
 
-### 4. Mit Swagger UI testen
+### 4. Mit Swagger UI testen (Empfohlen!)
 
 1. Öffne http://localhost:8000/docs
 2. Klicke auf "Authorize" 🔓
