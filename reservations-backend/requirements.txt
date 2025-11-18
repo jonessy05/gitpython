@@ -1,3 +1,6 @@
+# Core dependencies for Reservierungen API Backend
+# Last updated: November 18, 2025
+
 fastapi==0.121.1
 uvicorn[standard]==0.24.0
 python-jose[cryptography]==3.3.0
