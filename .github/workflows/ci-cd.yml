@@ -63,7 +63,7 @@ jobs:
       
       - run: |
           cd reservations-backend
-          pytest tests/ -v --tb=short --cov=app --cov-report=xml --cov-report=term-summary
+          pytest tests/ -v --tb=short --cov=app --cov-report=xml --cov-report=term
       
       - uses: codecov/codecov-action@v3
         with:
