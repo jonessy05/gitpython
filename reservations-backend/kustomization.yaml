@@ -1,0 +1,82 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Biletado Base
+namespace: biletado
+
+resources:
+  - https://gitlab.com/biletado/kustomize.git//overlays/kind?ref=main
+
+# Patches für das Reservations Backend
+patches:
+  # 1. Docker Image austauschen
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: localhost/reservations-backend:local-dev
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: reservations
+  
+  # 2. Port auf 8000 setzen (statt 3000)
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/ports/0/containerPort
+        value: 8000
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: reservations
+  
+  # 3. ImagePullPolicy auf "Never" (lokales Image)
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: reservations
+  
+  # 4. Service Port auf 8000 anpassen
+  - patch: |-
+      - op: replace
+        path: /spec/ports/0/targetPort
+        value: 8000
+    target:
+      group: ""
+      version: v1
+      kind: Service
+      name: reservations
+  
+  # 5. Environment Variablen setzen (replace statt add!)
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0
+        value:
+          name: SECRET_KEY
+          value: "your-secret-key-here"
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1
+        value:
+          name: LOG_LEVEL
+          value: "INFO"
+      - op: replace
+        path: /spec/template/spec/containers/0/env/2
+        value:
+          name: LOG_FORMAT
+          value: "json"
+      - op: replace
+        path: /spec/template/spec/containers/0/env/3
+        value:
+          name: DISABLE_AUTH
+          value: "true"
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: reservations

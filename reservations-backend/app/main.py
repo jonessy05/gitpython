@@ -2,6 +2,7 @@
 Einstiegspunkt - FastAPI Application mit Routes
 """
 from fastapi import FastAPI, status
+from fastapi.responses import JSONResponse
 from fastapi.openapi.utils import get_openapi
 from datetime import datetime, timedelta, timezone
 from app.routes import reservations
@@ -49,6 +50,87 @@ def health_check() -> dict:
     }
 
 
+@app.get("/status", tags=["system"], status_code=status.HTTP_200_OK)
+def api_status() -> dict:
+    """
+    API Status Endpoint with authors information
+    """
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "api": "Reservierungen API",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "authors": [
+            {
+                "name": "Jonas",
+                "role": "Developer"
+            }
+        ]
+    }
+
+
+@app.get("/api/v3/reservations/status", tags=["status"], status_code=status.HTTP_200_OK)
+def api_v3_reservations_status() -> dict:
+    """
+    API v3 Status Endpoint - information about the API-Status
+    """
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "api": "biletado/reservations-v3",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "authors": [
+            "Jonas"
+        ]
+    }
+
+
+@app.get("/api/v3/reservations/health", tags=["status"], status_code=status.HTTP_200_OK)
+def api_v3_reservations_health() -> dict:
+    """
+    Health information about the service
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
+@app.get("/api/v3/reservations/health/live", tags=["status"], status_code=status.HTTP_200_OK)
+def api_v3_reservations_health_live() -> dict:
+    """
+    Liveness information about the service. Can be used for liveness probes.
+    """
+    return {
+        "status": "alive",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
+@app.get("/api/v3/reservations/health/ready", tags=["status"], status_code=status.HTTP_200_OK)
+def api_v3_reservations_health_ready() -> dict:
+    """
+    Readiness information about the service. Can be used for readiness probes.
+    """
+    # Check if database is initialized
+    from app.database import _reservations_db
+    is_ready = len(_reservations_db) > 0
+    
+    if not is_ready:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "status": "not ready",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )
+    
+    return {
+        "status": "ready",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
 @app.post("/auth/token", tags=["authentication"])
 def login(username: str) -> dict:
     """
@@ -77,6 +159,34 @@ def login(username: str) -> dict:
     }
 
 
+@app.get("/auth/token", tags=["authentication"])
+def get_token(username: str = "testuser") -> dict:
+    """
+    Test-Token per GET generieren (einfach für Tests)
+    
+    Beispiel: /auth/token?username=jonas
+    """
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"sub": username},
+        expires_delta=access_token_expires
+    )
+    
+    logger.info(f"Test token generated for user: {username}", extra={
+        "operation": "AUTH",
+        "user_id": username,
+        "object_type": "token",
+        "object_id": "test-token"
+    })
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": 30 * 60,
+        "usage": "Add this to Authorization header: Bearer " + access_token
+    }
+
+
 @app.get("/", tags=["root"])
 def read_root() -> dict:
     """
@@ -89,7 +199,8 @@ def read_root() -> dict:
             "docs": "/docs",
             "openapi": "/openapi.json",
             "auth_token": "/auth/token",
-            "reservations": "/reservations"
+            "status": "/api/v3/status",
+            "reservations": "/api/v3/reservations"
         }
     }
 

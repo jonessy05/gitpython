@@ -1,29 +1,67 @@
 # ============================================================
-# 1️⃣ Build Stage — erstellt alle Python-Wheels inkl. Dependencies
+# Multi-Stage Dockerfile for Reservierungen API
+# Optimized for production with minimal size and security
 # ============================================================
-FROM python:3.11-slim AS builder
 
-WORKDIR /app
+# ============================================================
+# 1️⃣ Build Stage — Build Python wheels with all dependencies
+# ============================================================
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and build wheels
 COPY requirements.txt .
-
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
-    && pip install --upgrade pip \
-    # Hier wichtig: ohne --no-deps bauen, damit auch Starlette usw. dazukommen
-    && pip wheel -r requirements.txt -w /wheels \
-    && apt-get purge -y build-essential \
-    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+RUN pip install --upgrade pip wheel && \
+    pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
 # ============================================================
-# 2️⃣ Runtime Stage — leichtes Produktionsimage
+# 2️⃣ Runtime Stage — Minimal production image
 # ============================================================
-FROM python:3.11-slim
+FROM python:3.12-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser && \
+    mkdir -p /app /app/logs && \
+    chown -R appuser:appuser /app
 
 WORKDIR /app
+
+# Copy wheels from builder stage
 COPY --from=builder /wheels /wheels
-COPY . /app
 
-# jetzt alle Wheels (inkl. FastAPI + Starlette + Pydantic usw.) installieren
-RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt
+# Install runtime dependencies from wheels
+COPY requirements.txt .
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt && \
+    rm -rf /wheels /root/.cache
 
-EXPOSE 80
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+# Copy application code
+COPY --chown=appuser:appuser app/ /app/app/
+
+# Switch to non-root user
+USER appuser
+
+# Expose application port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=2)" || exit 1
+
+# Run application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+

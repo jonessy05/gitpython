@@ -17,8 +17,9 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 JWT_ISSUER_URL = os.getenv("JWT_ISSUER_URL", None)
+DISABLE_AUTH = os.getenv("DISABLE_AUTH", "false").lower() == "true"
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=not DISABLE_AUTH)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -45,7 +46,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
-async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+async def verify_token(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> str:
     """
     Verifiziert einen JWT Token (lokal oder über Keycloak)
     
@@ -58,6 +59,18 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
     Raises:
         HTTPException: Wenn Token ungültig oder abgelaufen ist
     """
+    # Auth disabled for development/testing
+    if DISABLE_AUTH:
+        logger.warning("Authentication is DISABLED - using anonymous user")
+        return "anonymous"
+    
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
     token = credentials.credentials
     
     # Nutze Keycloak wenn konfiguriert

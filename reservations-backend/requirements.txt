@@ -1,11 +1,12 @@
 # Core dependencies for Reservierungen API Backend
-# Last updated: November 18, 2025
+# Last updated: November 19, 2025
 
 fastapi==0.121.1
 uvicorn[standard]==0.24.0
 python-jose[cryptography]==3.3.0
-pydantic==2.5.0
+pydantic[email]==2.5.0
 pydantic-settings==2.1.0
+email-validator==2.1.0
 pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
