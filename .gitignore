@@ -65,3 +65,7 @@ kubeconfig
 .env
 .env.local
 .env.*.local
+coverage.xml
+.mypy_cache/
+pip-wheel-metadata/
+.venv/
