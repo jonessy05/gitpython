@@ -8,12 +8,11 @@
 >
 > See: [fantasy name generators](https://www.fantasynamegenerators.com/)
 
-Gruppenname: Covfefe
+Gruppenname: Restful Pythonists
 
 Gruppenteilnehmer:
 
 - Jonas Friedrich
-- Random 123
 
 ## Quellcode
 
@@ -25,7 +24,7 @@ Links zu den Versionskontrollendpunkten:
 
 ## Containerregistry
 
-z.B. "Verwenden die registry des gitlab-repositories", "ghcr.io" oder  BRAUCHE ICH GLAUBE ICH NICHT
+Lokale Registry (Kind Cluster) / localhost
 
 ## Lizenz
 
@@ -38,8 +37,6 @@ Empfohlene Dateien / Einträge:
 
 - Repository-Root
     - MIT: LICENSE
-- kustomization
-    - MIT: kustomization/LICENSE
 
 
 
@@ -48,12 +45,12 @@ Empfohlene Dateien / Einträge:
 
 | Frage                                 | Antwort                                            |
 |---------------------------------------|----------------------------------------------------|
-| Programmiersprache                    | python                                                 |
+| Programmiersprache                    | Python                                                 |
 | Sprachversion                         | 3.12                                                 |
 | Framework (FW)                        | FastAPI                         |
-| FW-Version                            | v 0.121.1                                             |
-| Website zum FW                        | [FastAPI](https://fastapi.tiangolo.com/release-notes/)                 |
-| Prepared statements/ORM               | "Pydantic", "Datenvalidierung", "In-Memory DB"     |
+| FW-Version                            | 0.121.1                                             |
+| Website zum FW                        | [FastAPI](https://fastapi.tiangolo.com/)                 |
+| Prepared statements/ORM               | In-Memory (Python Dictionary) / Pydantic (Validation) |
 | ORM Version                           | 2.5.0                                              |
 | Website zum ORM                       | [Pydantic](https://docs.pydantic.dev/)             |
 
