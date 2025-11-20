@@ -1,74 +1,36 @@
 """
-Datenbankmodelle für Reservierungen
+Pydantic models for Reservations API
 """
-from pydantic import BaseModel, Field, EmailStr, field_validator
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
-from datetime import datetime
-from enum import Enum
+from datetime import date, datetime
 from uuid import UUID
 
 
-DEFAULT_ROOM_ID = "00000000-0000-0000-0000-000000000000"
-
-
-class ReservationStatus(str, Enum):
-    """Status einer Reservierung"""
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    CANCELLED = "cancelled"
-    COMPLETED = "completed"
-
-
 class ReservationBase(BaseModel):
-    """Basis-Schema für Reservierungen"""
-    customer_name: str = Field(..., min_length=1, max_length=200, description="Name des Kunden")
-    customer_email: EmailStr = Field(..., description="E-Mail des Kunden")
-    reservation_date: datetime = Field(..., description="Reservierungsdatum")
-    party_size: int = Field(..., gt=0, le=100, description="Anzahl der Personen")
-    special_requests: Optional[str] = Field(None, max_length=1000, description="Spezielle Wünsche")
-    room_id: str = Field(
-        default=DEFAULT_ROOM_ID,
-        min_length=1,
-        max_length=100,
-        description="Raum-ID, in dem die Reservierung stattfindet"
-    )
+    """Base Schema for Reservations"""
+    start_date: date = Field(..., alias="from", description="Start date of the reservation")
+    end_date: date = Field(..., alias="to", description="End date of the reservation")
+    room_id: UUID = Field(..., description="ID of the room")
 
-    @field_validator("room_id", mode="before")
-    @classmethod
-    def ensure_room_id(cls, value: Optional[str]) -> str:
-        """Normalisiert fehlende oder leere Raum-IDs auf einen Standardwert"""
-        if value is None:
-            return DEFAULT_ROOM_ID
-        normalized = str(value).strip()
-        return normalized or DEFAULT_ROOM_ID
-    
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ReservationCreate(ReservationBase):
-    """Schema zum Erstellen einer Reservierung"""
-    @field_validator('reservation_date')
-    @classmethod
-    def validate_reservation_date(cls, v: datetime) -> datetime:
-        """Ensure reservation date is not in the past when creating a reservation"""
-        # allow loading existing reservations with past dates; enforce only on creation
-        if v < datetime.now(v.tzinfo or None):
-            raise ValueError('Reservation date cannot be in the past')
-        return v
+    """Schema for creating a reservation"""
+    pass
 
 
 class Reservation(ReservationBase):
-    """Vollständiges Reservierungs-Schema mit ID und Status"""
-    id: UUID = Field(..., description="Eindeutige Reservierungs-ID (UUID)")
-    status: ReservationStatus = Field(default=ReservationStatus.PENDING, description="Status der Reservierung")
-    created_at: datetime = Field(..., description="Erstellungsdatum")
-    updated_at: datetime = Field(..., description="Zuletzt aktualisiert")
-    deleted_at: Optional[datetime] = Field(None, description="Löschdatum (für soft delete)")
+    """Schema for a full reservation"""
+    id: UUID = Field(..., description="Unique ID of the reservation")
+    deleted_at: Optional[datetime] = Field(None, description="Timestamp when the reservation was soft-deleted")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class TokenData(BaseModel):
     """JWT Token Payload"""
     sub: str = Field(..., description="Subject (Benutzer-ID)")
     exp: int = Field(..., description="Expiration Time")
+

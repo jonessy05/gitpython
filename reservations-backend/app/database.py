@@ -1,114 +1,103 @@
 """
-In-Memory Datenbank für Reservierungen
-Diese Datei verwaltet den Datenspeicher. Für Produktion sollte dies durch
-eine echte PostgreSQL/MySQL Datenbank mit SQLAlchemy ORM ersetzt werden.
+PostgreSQL Database Connection and Models
 """
-from datetime import datetime, timezone
-from typing import Dict, Optional
-from uuid import UUID, uuid4
-from app.models import ReservationStatus, DEFAULT_ROOM_ID
-import logging
+import os
+from sqlalchemy import create_engine, Column, Date, DateTime, Uuid
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
+from sqlalchemy.sql import func
+from uuid import uuid4, UUID
+from typing import List, Optional
+from datetime import datetime
 
-logger = logging.getLogger(__name__)
+# Database Configuration
+DB_USER = os.getenv("POSTGRES_RESERVATIONS_USER", "postgres")
+DB_PASSWORD = os.getenv("POSTGRES_RESERVATIONS_PASSWORD", "postgres")
+DB_HOST = os.getenv("POSTGRES_RESERVATIONS_HOST", "postgres")
+DB_PORT = os.getenv("POSTGRES_RESERVATIONS_PORT", "5432")
+DB_NAME = os.getenv("POSTGRES_RESERVATIONS_DBNAME", "reservations_v3")
 
-# In-Memory Datenbank
-_reservations_db: Dict[UUID, dict] = {}
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-def init_db():
-    """Initialisiert die In-Memory Datenbank mit Sample-Daten"""
-    global _reservations_db
+class ReservationDB(Base):
+    __tablename__ = "reservations"
 
-    sample_id = uuid4()
-    deleted_id = uuid4()
-    
-    now = datetime.now(timezone.utc)
-    
-    _reservations_db = {
-        sample_id: {
-            "id": sample_id,
-            "customer_name": "Jonas",
-            "customer_email": "jonas@example.com",
-            "reservation_date": datetime(2025, 11, 10, 19, 0, 0, tzinfo=timezone.utc),
-            "party_size": 4,
-            "special_requests": None,
-            "room_id": "11111111-1111-1111-1111-111111111111",
-            "status": ReservationStatus.CONFIRMED,
-            "created_at": now,
-            "updated_at": now,
-            "deleted_at": None
-        },
-        deleted_id: {
-            "id": deleted_id,
-            "customer_name": "Deleted User",
-            "customer_email": "deleted@example.com",
-            "reservation_date": datetime(2025, 11, 5, 18, 0, 0, tzinfo=timezone.utc),
-            "party_size": 2,
-            "special_requests": None,
-            "room_id": "22222222-2222-2222-2222-222222222222",
-            "status": ReservationStatus.CANCELLED,
-            "created_at": now,
-            "updated_at": now,
-            "deleted_at": now
-        }
-    }
-    logger.info("Database initialized with sample data")
+    id = Column(Uuid, primary_key=True, default=uuid4)
+    start_date = Column("from", Date, nullable=False)
+    end_date = Column("to", Date, nullable=False)
+    room_id = Column(Uuid, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
+def get_db():
+    """Dependency for getting DB session"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-def get_all_reservations(include_deleted: bool = False) -> list:
-    """Gibt alle Reservierungen zurück"""
-    if include_deleted:
-        return list(_reservations_db.values())
-    return [res for res in _reservations_db.values() if res.get("deleted_at") is None]
+# CRUD Operations
+def get_all_reservations(db: Session, include_deleted: bool = False) -> List[ReservationDB]:
+    query = db.query(ReservationDB)
+    if not include_deleted:
+        query = query.filter(ReservationDB.deleted_at.is_(None))
+    return query.all()
 
+def get_reservation_by_id(db: Session, reservation_id: UUID) -> Optional[ReservationDB]:
+    return db.query(ReservationDB).filter(ReservationDB.id == reservation_id).first()
 
-def get_reservation_by_id(reservation_id: UUID) -> Optional[dict]:
-    """Gibt eine Reservierung nach ID zurück oder None"""
-    return _reservations_db.get(reservation_id)
+def create_reservation(db: Session, reservation_data: dict) -> ReservationDB:
+    # Ensure keys match the model attributes (start_date, end_date)
+    # If input has 'from'/'to', map them
+    data = reservation_data.copy()
+    if 'from' in data:
+        data['start_date'] = data.pop('from')
+    if 'to' in data:
+        data['end_date'] = data.pop('to')
+        
+    db_reservation = ReservationDB(**data)
+    db.add(db_reservation)
+    db.commit()
+    db.refresh(db_reservation)
+    return db_reservation
 
-
-def create_reservation(reservation_data: dict) -> dict:
-    """Erstellt eine neue Reservierung und gibt sie zurück"""
-    new_id = uuid4()
-    
-    new_reservation = {
-        "id": new_id,
-        "deleted_at": None,
-        **reservation_data
-    }
-    if not new_reservation.get("room_id"):
-        new_reservation["room_id"] = DEFAULT_ROOM_ID
-
-    _reservations_db[new_id] = new_reservation
-
-    logger.debug(f"Created reservation with id: {new_reservation['id']}")
-    return new_reservation
-
-
-def update_reservation(reservation_id: UUID, updates: dict) -> Optional[dict]:
-    """Aktualisiert eine Reservierung"""
-    if reservation_id not in _reservations_db:
+def update_reservation(db: Session, reservation_id: UUID, updates: dict) -> Optional[ReservationDB]:
+    db_reservation = get_reservation_by_id(db, reservation_id)
+    if not db_reservation:
         return None
+    
+    # Map 'from'/'to' to start_date/end_date
+    if 'from' in updates:
+        updates['start_date'] = updates.pop('from')
+    if 'to' in updates:
+        updates['end_date'] = updates.pop('to')
 
-    _reservations_db[reservation_id].update(updates)
-    logger.debug(f"Updated reservation with id: {reservation_id}")
-    return _reservations_db[reservation_id]
+    for key, value in updates.items():
+        if hasattr(db_reservation, key):
+            setattr(db_reservation, key, value)
+    
+    db.commit()
+    db.refresh(db_reservation)
+    return db_reservation
 
-
-def delete_reservation(reservation_id: UUID) -> bool:
-    """Soft delete einer Reservierung. Gibt True zurück wenn erfolgreich, False sonst"""
-    if reservation_id not in _reservations_db:
+def delete_reservation(db: Session, reservation_id: UUID) -> bool:
+    db_reservation = get_reservation_by_id(db, reservation_id)
+    if not db_reservation:
         return False
-
-    _reservations_db[reservation_id]["deleted_at"] = datetime.now(timezone.utc)
-    logger.debug(f"Soft deleted reservation with id: {reservation_id}")
+    
+    db_reservation.deleted_at = func.now()
+    db.commit()
     return True
 
+def restore_reservation(db: Session, reservation_id: UUID) -> bool:
+    db_reservation = get_reservation_by_id(db, reservation_id)
+    if not db_reservation:
+        return False
+        
+    db_reservation.deleted_at = None
+    db.commit()
+    return True
 
-def reservation_exists(reservation_id: UUID) -> bool:
-    """Prüft ob eine Reservierung existiert (auch gelöschte)"""
-    return reservation_id in _reservations_db
-
-
-# Initialisiere DB beim Import
-init_db()
