@@ -60,6 +60,6 @@ Art der Automatisierung: "GitHub Actions"
 
 ## geplante Testautomatisierung
 
-Art der Testautomatisierung: "pytest mit pytest-asyncio", "pytest-cov für Coverage", "pylint für Code-Qualität", "black für Code-Formatting"
+Art der Testautomatisierung: "pytest mit pytest-asyncio für Unit-Tests", "pytest-cov für Coverage-Reports", "Model-Validierungstests (20 Tests für Pydantic-Modelle)"
 
-Wie sind die Ergebnisse einzusehen?: pytest.ini Konfiguration, Coverage-Reports über pytest-cov, Linting durch pylint    
+Wie sind die Ergebnisse einzusehen?: GitHub Actions Workflow "Tests" (`.github/workflows/tests.yml`), Coverage-Reports als Artefakte, Testergebnisse im GitHub Actions Tab
