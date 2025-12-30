@@ -19,7 +19,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 JWT_ISSUER_URL = os.getenv("JWT_ISSUER_URL", None)
 DISABLE_AUTH = os.getenv("DISABLE_AUTH", "false").lower() == "true"
 
-security = HTTPBearer(auto_error=not DISABLE_AUTH)
+security = HTTPBearer(auto_error=False)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -67,7 +67,7 @@ async def verify_token(credentials: Optional[HTTPAuthorizationCredentials] = Dep
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authentication credentials",
+            detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"}
         )
     
@@ -119,3 +119,20 @@ async def verify_token(credentials: Optional[HTTPAuthorizationCredentials] = Dep
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+async def optional_verify_token(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> str:
+    """
+    Optionale Token-Verifikation - gibt "anonymous" zurück wenn kein Token vorhanden ist
+    
+    Args:
+        credentials: HTTP Bearer Token (optional)
+    
+    Returns:
+        Benutzer-ID (subject) aus dem Token oder "anonymous"
+    """
+    if not credentials:
+        return "anonymous"
+    
+    return await verify_token(credentials)
+

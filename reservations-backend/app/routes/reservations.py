@@ -2,13 +2,35 @@
 Routes for Reservations API
 """
 from fastapi import APIRouter, HTTPException, status, Depends, Query
+from fastapi.responses import JSONResponse
 from typing import List, Dict
 from uuid import UUID
 from sqlalchemy.orm import Session
 from app.models import Reservation, ReservationCreate
-from app.auth import verify_token
+from app.auth import verify_token, optional_verify_token
 from app.logging_config import log_operation
 from app import database
+import json
+from datetime import date, datetime
+
+
+def db_to_pydantic(db_obj) -> dict:
+    """Convert SQLAlchemy model to Pydantic-compatible dict with proper serialization"""
+    def serialize_value(val):
+        if isinstance(val, (date, datetime)):
+            return val.isoformat()
+        elif isinstance(val, UUID):
+            return str(val)
+        return val
+    
+    return {
+        "id": serialize_value(db_obj.id),
+        "from": serialize_value(db_obj.start_date),
+        "to": serialize_value(db_obj.end_date),
+        "room_id": serialize_value(db_obj.room_id),
+        "deleted_at": serialize_value(db_obj.deleted_at) if db_obj.deleted_at else None
+    }
+
 
 router = APIRouter(
     prefix="/api/v3/reservations",
@@ -54,7 +76,7 @@ async def get_health_ready():
 @router.get("/reservations", response_model=Dict[str, List[Reservation]])
 async def get_all_reservations(
     include_deleted: bool = Query(False, description="Include deleted reservations"),
-    user_id: str = Depends(verify_token),
+    user_id: str = Depends(optional_verify_token),
     db: Session = Depends(database.get_db)
 ):
     """
@@ -76,7 +98,7 @@ async def get_all_reservations(
 @router.get("/reservations/{reservation_id}", response_model=Reservation)
 async def get_reservation(
     reservation_id: UUID,
-    user_id: str = Depends(verify_token),
+    user_id: str = Depends(optional_verify_token),
     db: Session = Depends(database.get_db)
 ):
     """
@@ -103,7 +125,7 @@ async def get_reservation(
 @router.post("/reservations", response_model=Reservation, status_code=status.HTTP_201_CREATED)
 async def create_reservation(
     reservation: ReservationCreate,
-    user_id: str = Depends(verify_token),
+    user_id: str = Depends(optional_verify_token),
     db: Session = Depends(database.get_db)
 ):
     """
@@ -123,11 +145,11 @@ async def create_reservation(
     return new_reservation
 
 
-@router.put("/reservations/{reservation_id}", response_model=Reservation)
+@router.put("/reservations/{reservation_id}")
 async def replace_reservation(
     reservation_id: UUID,
     reservation: ReservationCreate,
-    user_id: str = Depends(verify_token),
+    user_id: str = Depends(optional_verify_token),
     db: Session = Depends(database.get_db)
 ):
     """
@@ -137,6 +159,14 @@ async def replace_reservation(
     reservation_data = reservation.model_dump(by_alias=True)
     
     if existing:
+        # Update requires authentication
+        if user_id == "anonymous":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        
         # Update
         updated = database.update_reservation(db, reservation_id, reservation_data)
         # Restore if deleted
@@ -151,9 +181,12 @@ async def replace_reservation(
             object_id=str(reservation_id),
             message=f"Updated/restored reservation {reservation_id}"
         )
-        return updated
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=db_to_pydantic(updated)
+        )
     else:
-        # Create with ID
+        # Create with ID - no auth required
         reservation_data["id"] = reservation_id
         new_reservation = database.create_reservation(db, reservation_data)
         
@@ -164,7 +197,10 @@ async def replace_reservation(
             object_id=str(reservation_id),
             message=f"Created reservation with specified ID {reservation_id}"
         )
-        return new_reservation
+        return JSONResponse(
+            status_code=status.HTTP_201_CREATED,
+            content=db_to_pydantic(new_reservation)
+        )
 
 
 @router.delete("/reservations/{reservation_id}", status_code=status.HTTP_204_NO_CONTENT)

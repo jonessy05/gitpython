@@ -74,7 +74,17 @@ patches:
         path: /spec/template/spec/containers/0/env/3
         value:
           name: DISABLE_AUTH
-          value: "true"
+          value: "false"
+      - op: replace
+        path: /spec/template/spec/containers/0/env/4
+        value:
+          name: JWT_ISSUER_URL
+          value: "http://keycloak/auth/realms/biletado"
+      - op: replace
+        path: /spec/template/spec/containers/0/env/5
+        value:
+          name: JWT_ALGORITHM
+          value: "RS256"
     target:
       group: apps
       version: v1

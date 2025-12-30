@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Konfiguration aus Umgebungsvariablen
 JWT_ISSUER_URL = os.getenv("JWT_ISSUER_URL", None)
-JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "reservations-api")
+JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", None)  # Optional, None = skip audience validation
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "RS256")
 
 # Fallback auf lokale Validierung, wenn JWT_ISSUER_URL nicht gesetzt
@@ -25,7 +25,8 @@ class KeycloakValidator:
 
     def __init__(self, issuer_url: str):
         self.issuer_url = issuer_url.rstrip("/")
-        self.jwks_url = f"{self.issuer_url}/.well-known/jwks.json"
+        # Keycloak JWKS endpoint is at /protocol/openid-connect/certs
+        self.jwks_url = f"{self.issuer_url}/protocol/openid-connect/certs"
         self._jwks_cache = None
         self._public_keys = {}
 
@@ -93,12 +94,21 @@ class KeycloakValidator:
             public_key = public_keys[kid]
 
             # Validiere Token mit Public Key
+            # Skip issuer validation since token issuer uses external URL (localhost:9090)
+            # while backend uses internal service name (keycloak)
+            decode_options = {
+                "verify_signature": True,
+                "verify_exp": True,
+                "verify_iat": True,
+                "verify_aud": JWT_AUDIENCE is not None,
+                "verify_iss": False  # Skip issuer validation
+            }
+            
             payload = jwt.decode(
                 token,
                 public_key,
                 algorithms=[JWT_ALGORITHM],
-                audience=JWT_AUDIENCE,
-                issuer=self.issuer_url
+                options=decode_options
             )
 
             logger.info(f"Token validated for user: {payload.get('sub')}")
