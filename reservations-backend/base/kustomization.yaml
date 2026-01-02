@@ -7,20 +7,9 @@ namespace: biletado
 resources:
   - https://gitlab.com/biletado/kustomize.git//overlays/kind?ref=main
 
-# Patches für das Reservations Backend
+# Gemeinsame Patches für das Reservations Backend
 patches:
-  # 1. Docker Image austauschen
-  - patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/image
-        value: localhost/reservations-backend:local-dev
-    target:
-      group: apps
-      version: v1
-      kind: Deployment
-      name: reservations
-  
-  # 2. Port auf 8000 setzen (statt 3000)
+  # Port auf 8000 setzen (statt 3000)
   - patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/ports/0/containerPort
@@ -31,18 +20,7 @@ patches:
       kind: Deployment
       name: reservations
   
-  # 3. ImagePullPolicy auf "Never" (lokales Image)
-  - patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/imagePullPolicy
-        value: Never
-    target:
-      group: apps
-      version: v1
-      kind: Deployment
-      name: reservations
-  
-  # 4. Service Port auf 8000 anpassen
+  # Service Port auf 8000 anpassen
   - patch: |-
       - op: replace
         path: /spec/ports/0/targetPort
@@ -53,7 +31,7 @@ patches:
       kind: Service
       name: reservations
   
-  # 5. Environment Variablen setzen (replace statt add!)
+  # Environment Variablen setzen
   - patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/env/0

@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Lokale Entwicklungsumgebung
+resources:
+  - ../../base
+
+patches:
+  # Docker Image für lokale Entwicklung
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: localhost/reservations-backend:local-dev
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: reservations
+  
+  # ImagePullPolicy auf "Never" (lokales Image)
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: reservations

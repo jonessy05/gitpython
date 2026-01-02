@@ -8,11 +8,12 @@
 >
 > See: [fantasy name generators](https://www.fantasynamegenerators.com/)
 
-Gruppenname: Restful Pythonists
+Gruppenname: restful pythonists
 
 Gruppenteilnehmer:
 
 - Jonas Friedrich
+- Tuluhan Engin
 
 ## Quellcode
 
@@ -20,11 +21,11 @@ Gruppenteilnehmer:
 
 Links zu den Versionskontrollendpunkten:
 
-- git@github.com:jonessy05/gitpython.git
+- https://github.com/jonessy05/gitpython
 
 ## Containerregistry
 
-Lokale Registry (Kind Cluster) / localhost
+ghcr.io (GitHub Container Registry) + lokale Registry (Kind Cluster / localhost)
 
 ## Lizenz
 
@@ -50,9 +51,9 @@ Empfohlene Dateien / Einträge:
 | Framework (FW)                        | FastAPI                         |
 | FW-Version                            | 0.121.1                                             |
 | Website zum FW                        | [FastAPI](https://fastapi.tiangolo.com/)                 |
-| Prepared statements/ORM               | In-Memory (Python Dictionary) / Pydantic (Validation) |
-| ORM Version                           | 2.5.0                                              |
-| Website zum ORM                       | [Pydantic](https://docs.pydantic.dev/)             |
+| Prepared statements/ORM               | SQLAlchemy 2.0.23 + Pydantic 2.5.0 (PostgreSQL-Datenbank) |
+| ORM Version                           | SQLAlchemy 2.0.23, Pydantic 2.5.0                  |
+| Website zum ORM                       | [SQLAlchemy](https://www.sqlalchemy.org/) / [Pydantic](https://docs.pydantic.dev/) |
 
 ## geplante Automatisierung
 
@@ -60,6 +61,7 @@ Art der Automatisierung: "GitHub Actions"
 
 ## geplante Testautomatisierung
 
-Art der Testautomatisierung: "pytest mit pytest-asyncio für Unit-Tests", "pytest-cov für Coverage-Reports", "Model-Validierungstests (20 Tests für Pydantic-Modelle)"
+Art der Testautomatisierung: "pytest mit pytest-asyncio für Unit-Tests", "pytest-cov für Coverage-Reports", "Model-Validierungstests (~10 Tests für Pydantic-Modelle, siehe `reservations-backend/tests`)"
 
-Wie sind die Ergebnisse einzusehen?: GitHub Actions Workflow "Tests" (`.github/workflows/tests.yml`), Coverage-Reports als Artefakte, Testergebnisse im GitHub Actions Tab
+Wie sind die Ergebnisse einzusehen?: GitHub Actions Workflow `.github/workflows/ci-cd.yml` (Job `test`).
+Testergebnisse und Coverage-Ausgabe sind in den Logs des GitHub Actions Runs sichtbar. Pytest erzeugt eine `coverage.xml` in der die Ergebnisse gespeichert werden.
