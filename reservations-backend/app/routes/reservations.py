@@ -10,7 +10,6 @@ from app.models import Reservation, ReservationCreate
 from app.auth import verify_token, optional_verify_token
 from app.logging_config import log_operation
 from app import database
-import json
 from datetime import date, datetime
 
 
@@ -44,7 +43,10 @@ async def get_status():
     Status information about the API
     """
     return {
-        "authors": ["Biletado Team"],
+        "authors": [
+            "Jonas",
+            "Tuluhan"
+        ],
         "api_version": "3.0.0"
     }
 
