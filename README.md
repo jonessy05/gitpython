@@ -220,7 +220,7 @@ Alle Logs enthalten:
 
 ## 📦 Abhängigkeiten
 
-Siehe [reservations-backend/requirements.txt](requirements.txt) für vollständige Liste.
+Siehe [requirements.txt](reservations-backend/requirements.txt) für vollständige Liste.
 
 ---
 
