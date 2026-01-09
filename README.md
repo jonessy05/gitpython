@@ -220,18 +220,7 @@ Alle Logs enthalten:
 
 ## 📦 Abhängigkeiten
 
-```
-FastAPI==0.121.1
-Pydantic==2.5.0
-SQLAlchemy==2.0.23
-python-jose[cryptography]==3.3.0
-uvicorn[standard]==0.24.0
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
-```
-
-Siehe [requirements.txt](requirements.txt) für vollständige Liste.
+Siehe [reservations-backend/requirements.txt](requirements.txt) für vollständige Liste.
 
 ---
 
