@@ -1,124 +1,186 @@
-# Reservierungen Backend API
+# Biletado - Reservation API
 
-FastAPI REST API für die Verwaltung von Reservierungen mit JWT-Authentifizierung, PostgreSQL, Docker und Kubernetes.
+FastAPI REST API for managing reservations with JWT authentication, PostgreSQL, Docker, and Kubernetes.
 
-**Stack:** Python 3.12 | FastAPI 0.121.1 | SQLAlchemy 2.0.23 | Pydantic 2.5.0 | PostgreSQL
+Built as a project for the Web Engineering 2 course at DHBW Karlsruhe.
+
+## Project Overview
+
+**Technology Stack:**
+- Backend: Python 3.12 | FastAPI 0.121.1
+- ORM: SQLAlchemy 2.0.23
+- Validation: Pydantic 2.5.0
+- Database: PostgreSQL
+- Infrastructure: Kubernetes via Kustomize
+- Identity Management: Keycloak (optional)
+- API Documentation: Swagger (OpenAPI)
 
 ---
 
-## 🚀 Quick Start
+## Getting Started
 
-### Voraussetzungen
-- **Podman** oder **Docker**
+### Prerequisites
+- **Podman** Desktop or **Docker**
 - **Kind** (Kubernetes in Docker)
-- **Kubectl**
+- **kubectl** and **kustomize**
 
-### Container-Deployment (Local Development)
+---
+## Deployment Scenarios
 
+### 1. Local Development
+
+**Clone the repository:**
 ```bash
-# Im reservations-backend Verzeichnis:
+git clone git@github.com:jonessy05/gitpython.git
 cd reservations-backend
+```
 
-# Image bauen
+**Ensure your Kubernetes cluster is running:**
+```bash
+kind get clusters
+```
+
+**Deploy to Kubernetes Cluster**
+
+1. Build the image:
+```bash
+cd reservations-backend
 podman build -t localhost/reservations-backend:local-dev .
+```
 
-# Image in Kind-Cluster laden
+2. Load the image into the Kind cluster:
+```bash
 podman save localhost/reservations-backend:local-dev --format oci-archive -o reservations-backend.tar
 kind load image-archive reservations-backend.tar -n kind-cluster
+```
 
-# Kustomize anwenden
+3. Apply Kustomize overlays:
+```bash
 kubectl apply -k overlays/local --prune -l app.kubernetes.io/part-of=biletado -n biletado
+```
 
-# Deployment neu starten
+4. Restart the deployment:
+```bash
 kubectl rollout restart deployment reservations -n biletado
+```
 
-# Auf Ready-Status warten
+5. Wait for the pods to be ready:
+```bash
 kubectl wait pods -n biletado -l app.kubernetes.io/component=backend --for condition=Ready --timeout=120s
 ```
 
-### Logs & Debugging
+**Access the service:**
 ```bash
-kubectl logs deployment/reservations -n biletado -f
 kubectl port-forward -n biletado deployment/reservations 8000:8000
 ```
 
-### 🐍 Python (Direkt, ohne Container)
+API available at: http://localhost:8000
 
+**View logs:**
 ```bash
-python -m venv venv
-source venv/bin/activate  # oder: venv\Scripts\activate (Windows)
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+kubectl logs deployment/reservations -n biletado -f
 ```
-
-API unter: http://localhost:8000 | Docs: http://localhost:8000/docs
 
 ---
 
-## 🔧 Konfigurationsparameter
+### 2. Deploy to Existing Kubernetes Cluster
 
-Alle Konfigurationen werden über Umgebungsvariablen gesteuert. Hier ist die **zentrale Referenz**:
+If you have an existing Biletado instance running in Kubernetes, clone the repository and apply the Kustomize overlays:
 
-### 📋 Allgemeine Konfiguration
-
-| Umgebungsvariable | Typ | Standard | Beschreibung | Erforderlich |
-|---|---|---|---|---|
-| `LOG_LEVEL` | string | `INFO` | Logging Level (DEBUG, INFO, WARNING, ERROR) | ❌ |
-| `LOG_FORMAT` | string | `json` | Log Format (json oder text) | ❌ |
-| `HOST` | string | `0.0.0.0` | Server Host/IP | ❌ |
-| `PORT` | int | `8000` | Server Port | ❌ |
-
-### 🔐 JWT-Authentifizierung (lokal)
-
-| Umgebungsvariable | Typ | Standard | Beschreibung | Erforderlich |
-|---|---|---|---|---|
-| `SECRET_KEY` | string | `your-secret-key-change-in-production` | JWT Secret für lokale Token-Signierung | ✅* |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | int | `30` | Token-Gültigkeit in Minuten | ❌ |
-| `DISABLE_AUTH` | boolean | `false` | Auth deaktivieren (nur für Tests!) | ❌ |
-
-**\* Pflichtfeld wenn Keycloak NICHT konfiguriert ist**
-
-### 🔐 Keycloak-Integration (Optional)
-
-| Umgebungsvariable | Typ | Standard | Beschreibung | Erforderlich |
-|---|---|---|---|---|
-| `JWT_ISSUER_URL` | string | nicht gesetzt | Keycloak OIDC Issuer URL (z.B. https://keycloak.example.com/auth/realms/biletado) | ❌** |
-| `JWT_ALGORITHM` | string | `HS256` | JWT Algo (HS256 für lokal, RS256 für Keycloak) | ❌ |
-| `JWT_AUDIENCE` | string | `reservations-api` | JWT Audience Claim | ❌ |
-
-**\*\* Wenn gesetzt, wird Keycloak verwendet statt lokalem JWT**
-
-### 🗄️ PostgreSQL-Datenbank
-
-| Umgebungsvariable | Typ | Standard | Beschreibung | Erforderlich |
-|---|---|---|---|---|
-| `POSTGRES_RESERVATIONS_HOST` | string | `postgres` | Database Host | ❌ |
-| `POSTGRES_RESERVATIONS_PORT` | int | `5432` | Database Port | ❌ |
-| `POSTGRES_RESERVATIONS_DBNAME` | string | `reservations_v3` | Database Name | ❌ |
-| `POSTGRES_RESERVATIONS_USER` | string | `postgres` | Database User | ❌ |
-| `POSTGRES_RESERVATIONS_PASSWORD` | string | `postgres` | Database Password | ❌ |
-
-### 🐳 Container-Beispiele
-
-**Docker lokal starten:**
 ```bash
-docker build -t reservations-backend:latest .
-docker run -p 8000:80 \
-  -e LOG_LEVEL=INFO \
-  -e SECRET_KEY="secure-key-here" \
-  -e POSTGRES_RESERVATIONS_HOST=postgres \
-  -e POSTGRES_RESERVATIONS_PASSWORD=secure-password \
-  reservations-backend:latest
+git clone git@github.com:jonessy05/gitpython.git
+cd reservations-backend
+kubectl apply -k overlays/local --prune -l app.kubernetes.io/part-of=biletado -n biletado
 ```
 
-**Alle Logs anzeigen:**
+---
+
+### 3. Deploy Pipeline-Generated Image
+
+Deploy a CI/CD-built image into your local kind cluster using manual steps.
+
+Prerequisites: `podman` (or Docker), `kind`, `kubectl` in PATH
+
+1. Pull the image from the registry:
 ```bash
-docker logs -f <container-id>
+podman pull ghcr.io/jonessy05/gitpython/reservations-api:latest
 ```
 
-### ☸️ Kubernetes Konfiguration
+2. Save and load the image into Kind:
+```bash
+podman save ghcr.io/jonessy05/gitpython/reservations-api:latest --format oci-archive -o reservations-cicd.tar
+kind load image-archive reservations-cicd.tar -n kind-cluster
+```
 
-Die Konfiguration erfolgt über `base/kustomization.yaml`:
+3. Apply the CI/CD overlay and restart the deployment:
+```bash
+kubectl apply -k overlays/cicd --prune -l app.kubernetes.io/part-of=biletado -n biletado
+kubectl rollout restart deployment reservations -n biletado
+kubectl wait pods -n biletado -l app.kubernetes.io/component=backend --for condition=Ready --timeout=120s
+```
+
+**Access the service:**
+```bash
+kubectl port-forward -n biletado deployment/reservations 8000:8000
+```
+
+API available at: http://localhost:8000
+
+**View logs:**
+```bash
+kubectl logs deployment/reservations -n biletado -f
+```
+
+---
+
+## Configuration Parameters
+
+All configurations are controlled via environment variables. This document serves as the **central reference**.
+
+### General Configuration
+
+| Variable | Type | Default | Description | Required |
+|---|---|---|---|---|
+| `LOG_LEVEL` | string | `INFO` | Logging Level (DEBUG, INFO, WARNING, ERROR) | No |
+| `LOG_FORMAT` | string | `json` | Log Format (json or text) | No |
+| `HOST` | string | `0.0.0.0` | Server Host/IP | No |
+| `PORT` | int | `8000` | Server Port | No |
+
+### JWT Authentication (Local)
+
+| Variable | Type | Default | Description | Required |
+|---|---|---|---|---|
+| `SECRET_KEY` | string | `your-secret-key-change-in-production` | JWT Secret for local token signing | Yes **\*** |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | int | `30` | Token validity in minutes | No |
+| `DISABLE_AUTH` | boolean | `false` | Disable authentication (tests only!) | No |
+
+**\* Required if Keycloak is NOT configured**
+
+### Keycloak Integration (Optional)
+
+| Variable | Type | Default | Description | Required |
+|---|---|---|---|---|
+| `JWT_ISSUER_URL` | string | not set | Keycloak OIDC Issuer URL (e.g., https://keycloak.example.com/auth/realms/biletado) | No **\*\*** |
+| `JWT_ALGORITHM` | string | `HS256` | JWT Algorithm (HS256 for local, RS256 for Keycloak) | No |
+| `JWT_AUDIENCE` | string | `reservations-api` | JWT Audience Claim | No |
+
+**\*\* If set, Keycloak will be used instead of local JWT**
+
+### PostgreSQL Database
+
+| Variable | Type | Default | Description | Required |
+|---|---|---|---|---|
+| `POSTGRES_RESERVATIONS_HOST` | string | `postgres` | Database Host | No |
+| `POSTGRES_RESERVATIONS_PORT` | int | `5432` | Database Port | No |
+| `POSTGRES_RESERVATIONS_DBNAME` | string | `reservations_v3` | Database Name | No |
+| `POSTGRES_RESERVATIONS_USER` | string | `postgres` | Database User | No |
+| `POSTGRES_RESERVATIONS_PASSWORD` | string | `postgres` | Database Password | No |
+
+---
+
+## Kubernetes Configuration
+
+Configuration is managed via `base/kustomization.yaml`:
 
 ```yaml
 namespace: biletado
@@ -133,7 +195,7 @@ secretGenerator:
       - SECRET_KEY="change-me-in-production"
 ```
 
-**Mit Kustomize deployen:**
+**Deploy with Kustomize:**
 ```bash
 kubectl apply -k base/ -n biletado
 kubectl logs -f deployment/reservations-backend -n biletado
@@ -141,7 +203,7 @@ kubectl logs -f deployment/reservations-backend -n biletado
 
 ---
 
-## 📋 API Endpoints
+## API Endpoints
 
 ### Health & Status
 - `GET /health` - Health Check
@@ -149,81 +211,115 @@ kubectl logs -f deployment/reservations-backend -n biletado
 - `GET /api/v3/reservations/health` - Service Health
 - `GET /api/v3/reservations/status` - Service Status
 
-### Reservierungen
-- `GET /api/v3/reservations/reservations` - Alle Reservierungen abrufen
-- `GET /api/v3/reservations/reservations/{id}` - Einzelne Reservierung
-- `POST /api/v3/reservations/reservations` - Neue Reservierung erstellen
-- `PUT /api/v3/reservations/reservations/{id}` - Reservierung aktualisieren/wiederherstellen
-- `DELETE /api/v3/reservations/reservations/{id}` - Reservierung löschen (soft delete)
+### Reservations
+- `GET /api/v3/reservations/reservations` - Get all reservations
+- `GET /api/v3/reservations/reservations/{id}` - Get specific reservation
+- `POST /api/v3/reservations/reservations` - Create new reservation
+- `PUT /api/v3/reservations/reservations/{id}` - Update or restore reservation
+- `DELETE /api/v3/reservations/reservations/{id}` - Delete reservation (soft delete)
 
-**Authentifizierung:** Alle POST/PUT/DELETE Endpoints benötigen ein gültiges JWT Token im `Authorization: Bearer <token>` Header
+**Authentication:** All POST/PUT/DELETE endpoints require a valid JWT token in the `Authorization: Bearer <token>` header
 
 ---
 
-## 🧪 Testing
+## CI/CD Pipeline
 
+The project includes an automated CI/CD pipeline that runs on every push:
+
+**Pipeline Stages:**
+- **Code Quality** (pylint, black, flake8)
+- **Unit Tests** (pytest + Coverage)
+- **Security Scans** (bandit, safety)
+- **Docker Image Build**
+
+**View pipeline logs:** Repository → Actions → [Run] → Jobs
+
+---
+
+## Testing
+
+#### Run unit tests (verbose)
 ```bash
-# Unit Tests ausführen
 pytest tests/ -v
+```
 
-# Mit Coverage Report
+#### Run tests with coverage (HTML + terminal)
+```bash
 pytest tests/ --cov=app --cov-report=html --cov-report=term
 ```
 
-**Automatisierte Tests:** GitHub Actions Pipeline prüft automatisch bei jedem Push:
-- ✅ Code Quality (pylint, black, flake8)
-- ✅ Unit Tests (pytest + Coverage)
-- ✅ Security Scans (bandit, safety)
-- ✅ Docker Build
+#### Run a single test file or test
+```bash
+pytest tests/test_example.py -q
+pytest tests/test_example.py::test_specific_case -q
+```
 
-Logs einsehen: Repository → Actions → [Run] → Jobs
+#### Open HTML coverage report
+```bash
+# After running coverage
+# Linux / macOS
+xdg-open htmlcov/index.html || open htmlcov/index.html
+
+# Windows (PowerShell)
+Start-Process htmlcov\index.html
+```
+
+#### Useful options
+- `-k "<expr>"` run tests matching expression
+- `-x` stop after first failure
+- `-m "<marker>"` run tests with a specific marker
+- `--maxfail=1` limit failures shown
+- `-q` quiet output
+- `-s` show print/log output during tests
+- `--cov-branch` enable branch coverage (when using coverage)
 
 ---
 
-## 📝 Logging
+## Logging
 
-**Log-Ausgabe lokal:**
+**View local logs:**
 ```bash
 uvicorn app.main:app --reload --log-level debug
 ```
 
-**Log-Level ändern:**
+**Change log level:**
 ```bash
 export LOG_LEVEL=DEBUG
 python app/main.py
 ```
 
-**In Kubernetes:**
+**View Kubernetes logs:**
 ```bash
 kubectl logs -f deployment/reservations-backend -n biletado
 kubectl logs deployment/reservations-backend -n biletado --tail=50
 ```
 
-Alle Logs enthalten:
+**Log Format:**
+All logs contain:
 - ISO 8601 Timestamp (UTC)
 - Log Level (DEBUG, INFO, WARNING, ERROR)
 - Operation (CREATE, READ, UPDATE, DELETE)
-- User ID & Object IDs
-- JSON-Format für strukturierte Verarbeitung
+- User ID and Object IDs
+- JSON format for structured processing
 
 ---
 
-## 🔐 Sicherheit
+## Security
 
-- **JWT-Authentifizierung** für alle sensiblen Endpoints
-- **Token-Expiration** nach konfigurierbarer Zeit (Standard: 30 Min)
-- **Pydantic Validierung** für alle Eingaben
-- **SQLAlchemy ORM** verhindert SQL-Injection
-- **Soft-Delete** für Audit Trail
-
----
-
-## 📦 Abhängigkeiten
-
-Siehe [requirements.txt](reservations-backend/requirements.txt) für vollständige Liste.
+- **JWT authentication** for all sensitive endpoints
+- **Token expiration** after configurable duration (default: 30 minutes)
+- **Pydantic validation** for all inputs
+- **SQLAlchemy ORM** prevents SQL injection
+- **Soft-delete** for audit trail
 
 ---
 
-## 📄 Lizenz
+## Dependencies
+
+See [requirements.txt](reservations-backend/requirements.txt) for complete list.
+
+---
+
+## License
 
 MIT License - Copyright (c) 2025 jonessy05
